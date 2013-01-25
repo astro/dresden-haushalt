@@ -6,14 +6,16 @@ function scrapeTable(url, cb) {
 	    return cb(err);
 	}
 
+	var categories = [];
 	var lines = [];
 	function extract() {
 	    var line = [];
-	    $(this).children("th, td").each(function() {
+	    $(this).children("td").each(function() {
 		if ($(this).attr('colspan') == "5") {
 		    var subtable = $(this).children('table');
-		    subtable.children('thead').children('tr').each(extract);
+		    categories.push(subtable.children('thead').find('th.col-2').text());
 		    subtable.children('tbody').children('tr').each(extract);
+		    categories.pop();
 		    return;
 		}
 
@@ -26,14 +28,20 @@ function scrapeTable(url, cb) {
 		    line.pop();
 
 		function toNum(s) {
-		    return parseInt(s.replace(/\./g, "").replace(/,/g, "."), 10);
+		    return s ?
+			parseInt(s.replace(/\./g, "").replace(/,/g, "."), 10) :
+			0;
 		}
-		lines.push(["2013-" + line[0], toNum(line[2]), "2013", line[1]]);
-		lines.push(["2014-" + line[0], toNum(line[3]), "2014", line[1]]);
+		categories.push(line[1]);
+		var income1 = toNum(line[2]);
+		var income2 = toNum(line[3]);
+		lines.push(["2013-" + line[0], income1 > 0 ? -income1 : 0, income1 <= 0 ? -income1 : 0, "2013"].concat(categories));
+		lines.push(["2014-" + line[0], income2 > 0 ? -income2 : 0, income2 <= 0 ? -income2 : 0, "2014"].concat(categories));
+		categories.pop();
 	    }
 	}
 
-	$('table#budget tr').each(extract);
+	$('table#budget').children('tbody').children('tr').each(extract);
 	cb(null, lines);
     });
 }
@@ -45,7 +53,18 @@ scrapeTable(START_URL, function(err, lines) {
 	process.exit(1);
     }
 
-    console.log("id,amount,time,from");
+    var maxFrom = Math.max.apply(Math, lines.map(function(line) {
+	return line.length - 4;
+    }));
+    lines.forEach(function(line) {
+	var lastFrom = line[line.length - 1];
+	while(line.length < maxFrom + 4)
+	    line.push(lastFrom);
+    });
+    var froms = [];
+    for(var i = 0; i < maxFrom; i++)
+	froms.push("from" + (i + 1));
+    console.log("id,income,spent,time," + froms.join(","));
     lines.slice(2).forEach(function(line) {
     	var csv = line.map(function(s) {
     	    if (typeof s == 'string' && s.indexOf('"') >= 0)
