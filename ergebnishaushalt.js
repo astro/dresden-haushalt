@@ -6,16 +6,20 @@ function scrapeTable(url, cb) {
 	    return cb(err);
 	}
 
-	var categories = [];
-	var lines = [];
 	function extract() {
+	    var item = {};
 	    var line = [];
 	    $(this).children("td").each(function() {
 		if ($(this).attr('colspan') == "5") {
 		    var subtable = $(this).children('table');
-		    categories.push(subtable.children('thead').find('th.col-2').text());
-		    subtable.children('tbody').children('tr').each(extract);
-		    categories.pop();
+		    var category = subtable.children('thead').find('th.col-2').text();
+		    var income1 = subtable.children('thead').find('th.col-3').text();
+		    var income2 = subtable.children('thead').find('th.col-4').text();
+		    var sub = subtable.children('tbody').children('tr').map(extract).toArray();
+		    item.label = category;
+		    item['2013'] = toNum(income1);
+		    item['2014'] = toNum(income2);
+		    item.sub = sub;
 		    return;
 		}
 
@@ -23,57 +27,29 @@ function scrapeTable(url, cb) {
 		line.push(s);
 	    });
 	    if (line.length > 0) {
-		var last = line[line.length - 1];
-		if (last == "" || last == "Details")
-		    line.pop();
-
 		function toNum(s) {
 		    return s ?
 			parseInt(s.replace(/\./g, "").replace(/,/g, "."), 10) :
 			0;
 		}
-		categories.push(line[1]);
-		var income1 = toNum(line[2]);
-		var income2 = toNum(line[3]);
-		lines.push(["2013-" + line[0], income1 > 0 ? -income1 : 0, income1 <= 0 ? -income1 : 0, "2013"].concat(categories));
-		lines.push(["2014-" + line[0], income2 > 0 ? -income2 : 0, income2 <= 0 ? -income2 : 0, "2014"].concat(categories));
-		categories.pop();
+		item.label = line[1];
+		item['2013'] = toNum(line[2]);
+		item['2014'] = toNum(line[3]);
 	    }
+	    return item.label ? item : null;
 	}
 
-	$('table#budget').children('tbody').children('tr').each(extract);
-	cb(null, lines);
+	var items = $('table#budget').children('tbody').children('tr').map(extract).toArray();
+	cb(null, items);
     });
 }
 
 var START_URL = "http://www.dresden.de/de/02/035/haushalt/buergerhaushalt/ergebnishaushalt.php";
-scrapeTable(START_URL, function(err, lines) {
+scrapeTable(START_URL, function(err, items) {
     if (err) {
 	console.error(err);
 	process.exit(1);
     }
 
-    var maxFrom = Math.max.apply(Math, lines.map(function(line) {
-	return line.length - 4;
-    }));
-    lines.forEach(function(line) {
-	var lastFrom = line[line.length - 1];
-	while(line.length < maxFrom + 4)
-	    line.push(lastFrom);
-    });
-    var froms = [];
-    for(var i = 0; i < maxFrom; i++)
-	froms.push("from" + (i + 1));
-    console.log("id,income,spent,time," + froms.join(","));
-    lines.slice(2).forEach(function(line) {
-    	var csv = line.map(function(s) {
-    	    if (typeof s == 'string' && s.indexOf('"') >= 0)
-    		throw "unexpected quote";
-    	    else if (typeof s == 'string' && s.indexOf(",") >= 0)
-    		return '"' + s + '"';
-    	    else
-    		return s;
-    	}).join(",");
-    	console.log(csv);
-    });
+    console.log("loadData(" + JSON.stringify(items.slice(2))  + ");");
 });
