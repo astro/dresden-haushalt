@@ -1,6 +1,8 @@
 var W = 640, H = 480;
 var PAD_TOP = 16;
 
+var history = [];
+
 function plot(data) {
     /* Presort by size */
     data = data.sort(function(a, b) {
@@ -44,7 +46,11 @@ function plot(data) {
 	return (y - minY) * (H - PAD_TOP) / (maxY - minY) + PAD_TOP;
     }
 
-    var svg = d3.select('body').append('svg')
+    var body = d3.select('body');
+    /* Clean up: */
+    body.select('svg').remove();
+
+    var svg = body.append('svg')
 	.attr('width', W)
 	.attr('height', H);
 
@@ -135,9 +141,9 @@ function plot(data) {
 			    var y = Math.min.apply(Math, dates.map(function(date) {
 				return d[date + ':y2'];
 			    }));
-			    return Math.floor(mapY(y) + 8);
+			    return Math.floor(mapY(y) + 9);
 			} else
-			    return Math.floor(mapY(d[date + ':y1']) - 8);
+			    return Math.floor(mapY(d[date + ':y1']) - 7);
 		    })
 		    .attr('fill', "black")
 		    .attr('font-weight', function(date, i) {
@@ -163,10 +169,10 @@ function plot(data) {
 	    }
 	}).on('click', function(d) {
 	    if (d.sub) {
-		svg.remove();
+		history.push(data);
 		plot(d.sub);
 	    }
-	})
+	});
 
     // svg.style('height', 0).transition().duration(500).style('height', W);
 
@@ -193,5 +199,16 @@ function strColor(s) {
 }
 
 function loadData(data) {
+    d3.select('body').append('p')
+	.append('a')
+	.attr('class', "back")
+	.attr('href', "#")
+	.on('click', function() {
+	    var data = history.pop();
+	    if (data)
+		plot(data);
+	})
+	.text("Ebene hoch");
+
     plot(data);
 }
