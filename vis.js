@@ -20,9 +20,9 @@ function plot(data) {
 	for(var i = 0; i < dates.length; i++) {
 	    var date = dates[i];
 	    if (d[date] < 0) {
-		d[date + ':y1'] = totalsSpent[i];
-		totalsSpent[i] += Math.sqrt(-d[date]);
 		d[date + ':y2'] = totalsSpent[i];
+		totalsSpent[i] += Math.sqrt(-d[date]);
+		d[date + ':y1'] = totalsSpent[i];
 	    } else {
 		d[date + ':y1'] = -totalsIncome[i];
 		totalsIncome[i] += Math.sqrt(d[date]);
@@ -133,11 +133,11 @@ function plot(data) {
 		    .attr('y', function(date, i) {
 			if (i == 0) {
 			    var y = Math.min.apply(Math, dates.map(function(date) {
-				return d[date + ':y1'];
+				return d[date + ':y2'];
 			    }));
 			    return Math.floor(mapY(y) + 8);
 			} else
-			    return Math.floor(mapY(d[date + ':y2']) - 6);
+			    return Math.floor(mapY(d[date + ':y1']) - 8);
 		    })
 		    .attr('fill', "black")
 		    .attr('font-weight', function(date, i) {
