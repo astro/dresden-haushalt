@@ -1,6 +1,18 @@
 var W = 640, H = 480;
 
 function plot(data) {
+    /* Presort by size */
+    data = data.sort(function(a, b) {
+	var diff1 = Math.abs(a['2013'] - a['2014']);
+	var diff2 = Math.abs(b['2013'] - b['2014']);
+	if (diff1 > diff2)
+	    return -1;
+	else if (diff1 < diff2)
+	    return 1;
+	else
+	    return 0;
+    });
+
     var dates = ['2013', '2014'];
     var totalsSpent = [0, 0], totalsIncome = [0, 0];
     data.forEach(function(d) {
@@ -87,7 +99,6 @@ console.log("minY",minY,maxY,"maxY");
 		    .attr('x', mapX(0))
 		    .attr('y', Math.floor(mapY((d[dates[0] + ':y2'] + d[dates[0] + ':y1']) / 2)))
 		    .attr('fill', "black")
-		    .attr('stroke', "white").attr('stroke-width', '1')
 		    .attr('dominant-baseline', 'middle')
 		    .text(d.label + " (" + d['2013'] + " €)");
 		d.hovering = true;
