@@ -1,4 +1,5 @@
 var W = 640, H = 480;
+var PAD_TOP = 16;
 
 function plot(data) {
     /* Presort by size */
@@ -42,13 +43,24 @@ console.log("minY",minY,maxY,"maxY");
 	return x * W / (2 * dates.length - 1);
     }
     function mapY(y) {
-	return (y - minY) * H / (maxY - minY);
+	return (y - minY) * (H - PAD_TOP) / (maxY - minY) + PAD_TOP;
     }
 
     var svg = d3.select('body').append('svg')
 	.attr('width', W)
 	.attr('height', H);
 	// .attr('viewBox', [0, minY, dates.length * 2 - 1, maxY - minY].join(" "));
+
+    svg.selectAll('.date')
+	.data(dates).enter()
+	.append('text')
+	.attr('x', function(date, i) {
+	    return mapX(i * 2 + 0.5);
+	})
+	.attr('y', PAD_TOP - 4)
+	.attr('fill', 'black')
+	.attr('text-anchor', 'middle')
+	.text(function(date) { return date; });
 
     var hovertext;
     svg.selectAll('.line')
