@@ -175,8 +175,8 @@ function plot(data) {
 	.attr('y1', mapY(0))
 	.attr('x2', mapX(dates.length * 2 - 1))
 	.attr('y2', mapY(0))
-	.attr('stroke', 'black')
-	.attr('stroke-style', "dotted");
+	.attr('stroke', 'red')
+	.attr('stroke-dasharray', "4px");
 }
 
 function strColor(s) {
