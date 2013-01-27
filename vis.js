@@ -21,11 +21,11 @@ function plot(data) {
 	    var date = dates[i];
 	    if (d[date] < 0) {
 		d[date + ':y1'] = totalsSpent[i];
-		totalsSpent[i] -= d[date];
+		totalsSpent[i] += Math.sqrt(-d[date]);
 		d[date + ':y2'] = totalsSpent[i];
 	    } else {
 		d[date + ':y1'] = -totalsIncome[i];
-		totalsIncome[i] += d[date];
+		totalsIncome[i] += Math.sqrt(d[date]);
 		d[date + ':y2'] = -totalsIncome[i];
 	    }
 	}
