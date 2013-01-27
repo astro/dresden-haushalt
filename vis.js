@@ -62,6 +62,7 @@ function plot(data) {
 	})
 	.attr('y', PAD_TOP - 4)
 	.attr('fill', 'black')
+	.attr('font-weight', 'bold')
 	.attr('text-anchor', 'middle')
 	.text(function(date) { return date; });
 
@@ -167,6 +168,11 @@ function plot(data) {
 		    .attr('z-index', 0);
 		delete d.hovering;
 	    }
+	}).attr('style', function(d) {
+	    if (d.sub)
+		return "cursor: pointer";
+	    else
+		return "";
 	}).on('click', function(d) {
 	    if (d.sub) {
 		history.push(data);
