@@ -49,7 +49,6 @@ console.log("minY",minY,maxY,"maxY");
     var svg = d3.select('body').append('svg')
 	.attr('width', W)
 	.attr('height', H);
-	// .attr('viewBox', [0, minY, dates.length * 2 - 1, maxY - minY].join(" "));
 
     svg.selectAll('.date')
 	.data(dates).enter()
@@ -84,23 +83,38 @@ console.log("minY",minY,maxY,"maxY");
 		tops.push([mapX(x), mapY(y2)],
 			  [mapX(x + 1), mapY(y2)]);
 	    });
-	    var start1 = bottoms.shift();
-	    var i = 0;
-	    var d1 = bottoms.map(function(p) {
-		i++;
-		return (i % 3 == 1 ? "C " : "") + Math.floor(p[0]) + " " + Math.floor(p[1]);
+	    var prevX, prevY;
+	    var d1 = bottoms.map(function(p, i) {
+		if (i == 0) {
+		    return "M " + Math.floor(p[0]) + " " + Math.floor(p[1]);
+		} else if (i % 2 == 1) {
+		    prevX = p[0];
+		    prevY = p[1];
+		    return "L " + Math.floor(p[0]) + " " + Math.floor(p[1]);
+		} else {
+		    return ["C",
+			    Math.floor(0.75 * p[0] + 0.25 * prevX), Math.floor(prevY),
+			    Math.floor(0.75 * prevX + 0.25 * p[0]), Math.floor(p[1]),
+			    Math.floor(p[0]), Math.floor(p[1])
+			   ].join(" ");
+		}
 	    });
-	    var start2 = tops.shift();
-	    i = 0;
-	    var d2 = tops.map(function(p) {
-		i++;
-		return (i % 3 == 1 ? "C " : "") + Math.floor(p[0]) + " " + Math.floor(p[1]);
+	    var d2 = tops.map(function(p, i) {
+		if (i == 0) {
+		    return "L " + Math.floor(p[0]) + " " + Math.floor(p[1]);
+		} else if (i % 2 == 1) {
+		    prevX = p[0];
+		    prevY = p[1];
+		    return "L " + Math.floor(p[0]) + " " + Math.floor(p[1]);
+		} else {
+		    return ["C",
+			    Math.floor(0.75 * p[0] + 0.25 * prevX), Math.floor(prevY),
+			    Math.floor(0.75 * prevX + 0.25 * p[0]), Math.floor(p[1]),
+			    Math.floor(p[0]), Math.floor(p[1])
+			   ].join(" ");
+		}
 	    });
-	    return "M " + Math.floor(start1[0]) + " " + Math.floor(start1[1]) + " " +
-		      d1.join(" ") +
-		      "L " + Math.floor(start2[0]) + " " + Math.floor(start2[1]) + " " +
-		      d2.join(" ") +
-		      " Z";
+	    return d1.join(" ") + " " + d2.join(" ") + " Z";
 	}).on('mouseover', function(d) {
 	    if (!d.hovering) {
 		console.log("hover",d);
