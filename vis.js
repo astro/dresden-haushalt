@@ -121,20 +121,35 @@ function plot(data) {
 		    .attr('stroke-width', "1.5")
 		    .attr('z-index', 1);
 		hovertexts = svg.selectAll('.hovertext')
-		    .data(dates).enter()
+		    .data([""].concat(dates)).enter()
 		    .append('text')
 		    .attr('class', "hovertext")
 		    .attr('x', function(date, i) {
-			return Math.floor(mapX(i * 2 + 0.5));
+			if (i == 0)
+			    return Math.floor(mapX((dates.length * 2 - 1) / 2));
+			else
+			    return Math.floor(mapX((i - 1) * 2 + 0.5));
 		    })
-		    .attr('y', function(date) {
-			return Math.floor(mapY((d[date + ':y2'] + d[date + ':y1']) / 2));
+		    .attr('y', function(date, i) {
+			if (i == 0) {
+			    var y = Math.min.apply(Math, dates.map(function(date) {
+				return d[date + ':y1'];
+			    }));
+			    return Math.floor(mapY(y) + 8);
+			} else
+			    return Math.floor(mapY(d[date + ':y2']) - 6);
 		    })
 		    .attr('fill', "black")
+		    .attr('font-weight', function(date, i) {
+			return i == 0 ? "bold" : "normal";
+		    })
 		    .attr('text-anchor', 'middle')
 		    .attr('dominant-baseline', 'middle')
-		    .text(function(date) {
-			return d[date] + " €";
+		    .text(function(date, i) {
+			if (i == 0)
+			    return d.label;
+			else
+			    return d[date] + " €";
 		    });
 		d.hovering = true;
 	    }
@@ -148,19 +163,20 @@ function plot(data) {
 	    }
 	}).on('click', function(d) {
 	    if (d.sub) {
-		svg.transition().duration(500).style('height', 0).remove();
+		svg.remove();
 		plot(d.sub);
 	    }
 	})
 
-    svg.style('height', 0).transition().duration(500).style('height', W);
+    // svg.style('height', 0).transition().duration(500).style('height', W);
 
     svg.append('line')
 	.attr('x1', mapX(0))
 	.attr('y1', mapY(0))
 	.attr('x2', mapX(dates.length * 2 - 1))
 	.attr('y2', mapY(0))
-	.attr('stroke', 'black');
+	.attr('stroke', 'black')
+	.attr('stroke-style', "dotted");
 }
 
 function strColor(s) {
