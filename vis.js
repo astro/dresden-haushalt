@@ -37,8 +37,6 @@ function plot(data) {
 	if (totalsSpent[i] > maxY)
 	    maxY = totalsSpent[i];
     }
-console.log("totalsSpent", totalsSpent, "totalsIncome", totalsIncome);
-console.log("minY",minY,maxY,"maxY");
     function mapX(x) {
 	return x * W / (2 * dates.length - 1);
     }
@@ -117,7 +115,6 @@ console.log("minY",minY,maxY,"maxY");
 	    return d1.join(" ") + " " + d2.join(" ") + " Z";
 	}).on('mouseover', function(d) {
 	    if (!d.hovering) {
-		console.log("hover",d);
 		d3.select(this)
 		    .attr('stroke', "black")
 		    .attr('z-index', 1);
@@ -163,12 +160,10 @@ function strColor(s) {
 	rgb[2] += 23 * (c & 0xa8);
     }
     for(i = 0; i < 3; i++)
-	rgb[i] = rgb[i] % 256;
-console.log("strColor", rgb, s);
+	rgb[i] = (rgb[i] % 128) + 128;
     return "rgb(" + [rgb].join(",") + ")";
 }
 
 function loadData(data) {
-    console.log("data",data);
     plot(data);
 }
