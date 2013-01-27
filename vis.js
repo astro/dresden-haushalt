@@ -59,7 +59,7 @@ function plot(data) {
 	.attr('text-anchor', 'middle')
 	.text(function(date) { return date; });
 
-    var hovertext;
+    var hovertexts;
     svg.selectAll('.line')
 	.data(data).enter()
 	.append('path')
@@ -67,6 +67,8 @@ function plot(data) {
 	.attr('fill', function(d) {
 	    return strColor(d.label);
 	})
+	.attr('stroke', "black")
+	.attr('stroke-width', "0.5")
  	.attr('d', function(d) {
 	    var x = -2, dx = dates.length * 2 - 1;
 	    var bottoms = [];
@@ -116,21 +118,31 @@ function plot(data) {
 	}).on('mouseover', function(d) {
 	    if (!d.hovering) {
 		d3.select(this)
-		    .attr('stroke', "black")
+		    .attr('stroke-width', "1.5")
 		    .attr('z-index', 1);
-		hovertext = svg.append('text')
-		    .attr('x', mapX(0))
-		    .attr('y', Math.floor(mapY((d[dates[0] + ':y2'] + d[dates[0] + ':y1']) / 2)))
+		hovertexts = svg.selectAll('.hovertext')
+		    .data(dates).enter()
+		    .append('text')
+		    .attr('class', "hovertext")
+		    .attr('x', function(date, i) {
+			return Math.floor(mapX(i * 2 + 0.5));
+		    })
+		    .attr('y', function(date) {
+			return Math.floor(mapY((d[date + ':y2'] + d[date + ':y1']) / 2));
+		    })
 		    .attr('fill', "black")
+		    .attr('text-anchor', 'middle')
 		    .attr('dominant-baseline', 'middle')
-		    .text(d.label + " (" + d['2013'] + " €)");
+		    .text(function(date) {
+			return d[date] + " €";
+		    });
 		d.hovering = true;
 	    }
 	}).on('mouseout', function(d) {
 	    if (d.hovering) {
-		hovertext.remove();
+		hovertexts.remove();
 		d3.select(this)
-		    .attr('stroke', "none")
+		    .attr('stroke-width', "0.5")
 		    .attr('z-index', 0);
 		delete d.hovering;
 	    }
