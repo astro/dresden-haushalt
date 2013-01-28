@@ -46,11 +46,11 @@ function plot(data) {
 	return (y - minY) * (H - PAD_TOP) / (maxY - minY) + PAD_TOP;
     }
 
-    var body = d3.select('body');
+    var container = d3.select('article');
     /* Clean up: */
-    body.select('svg').remove();
+    container.select('svg').remove();
 
-    var svg = body.append('svg')
+    var svg = container.append('svg')
 	.attr('width', W)
 	.attr('height', H);
 
@@ -205,7 +205,7 @@ function strColor(s) {
 }
 
 function loadData(data) {
-    d3.select('body').append('p')
+    d3.select('article').append('p')
 	.append('a')
 	.attr('class', "back")
 	.attr('href', "#")
