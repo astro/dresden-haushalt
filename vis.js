@@ -202,7 +202,6 @@ function plot(data) {
 	.attr('stroke', 'red')
 	.attr('stroke-dasharray', "4px");
 
-console.log("history",history);
     var historyList = d3.select('nav ul')
 	.selectAll('li')
 	.data(history);
