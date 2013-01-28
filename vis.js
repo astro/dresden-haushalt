@@ -4,13 +4,23 @@ var PAD_TOP = 16;
 var history = [];
 
 function plot(data) {
+    function sig(x) {
+	return x < 0 ? -1 : 1;
+    }
     /* Presort by size */
     data = data.sort(function(a, b) {
+	if (sig(a['2013']) != sig(a['2014']) &&
+	    sig(b['2013']) == sig(b['2014']))
+	    return -1;
+	if (sig(a['2013']) == sig(a['2014']) &&
+	    sig(b['2013']) != sig(b['2014']))
+	    return 1;
+
 	var diff1 = Math.abs(a['2013'] - a['2014']);
 	var diff2 = Math.abs(b['2013'] - b['2014']);
-	if (diff1 > diff2)
+	if (diff1 < diff2)
 	    return -1;
-	else if (diff1 < diff2)
+	else if (diff1 > diff2)
 	    return 1;
 	else
 	    return 0;
@@ -138,13 +148,15 @@ function plot(data) {
 			    return Math.floor(mapX((i - 1) * 2 + 0.5));
 		    })
 		    .attr('y', function(date, i) {
-			if (i == 0) {
-			    var y = Math.min.apply(Math, dates.map(function(date) {
+			var y2Min = Math.min.apply(Math, dates.map(function(date) {
 				return d[date + ':y2'];
-			    }));
-			    return Math.floor(mapY(y) + 9);
-			} else
-			    return Math.floor(mapY(d[date + ':y1']) - 7);
+			}));
+			if (i == 0)
+			    return Math.floor(mapY(y2Min) - 7);
+			else
+			    return Math.floor(Math.max(
+						  mapY(d[date + ':y1']) - 7,
+						  mapY(y2Min) + 7));
 		    })
 		    .attr('fill', "black")
 		    .attr('font-weight', function(date, i) {
