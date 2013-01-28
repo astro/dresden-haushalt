@@ -187,7 +187,7 @@ function plot(data) {
 		return "";
 	}).on('click', function(d) {
 	    if (d.sub) {
-		history.push(data);
+		history.push({ label: d.label, data: data });
 		plot(d.sub);
 	    }
 	});
@@ -201,6 +201,24 @@ function plot(data) {
 	.attr('y2', mapY(0))
 	.attr('stroke', 'red')
 	.attr('stroke-dasharray', "4px");
+
+console.log("history",history);
+    var historyList = d3.select('nav ul')
+	.selectAll('li')
+	.data(history);
+    historyList.enter()
+	.append('li')
+	.text(function(h) {
+	    return "Verlasse " + h.label;
+	})
+	.on('click', function(h) {
+	    var h1;
+	    do {
+		h1 = history.pop();
+	    } while(h1 !== h && history.length > 0);
+	    plot(h.data);
+	})
+    historyList.exit().remove();
 }
 
 function strColor(s) {
@@ -217,16 +235,5 @@ function strColor(s) {
 }
 
 function loadData(data) {
-    d3.select('article').append('p')
-	.append('a')
-	.attr('class', "back")
-	.attr('href', "#")
-	.on('click', function() {
-	    var data = history.pop();
-	    if (data)
-		plot(data);
-	})
-	.text("Ebene hoch");
-
     plot(data);
 }
