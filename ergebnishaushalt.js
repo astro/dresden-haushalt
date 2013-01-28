@@ -1,7 +1,9 @@
 var scraper = require('scraper');
+var resolve = require('url').resolve;
+var async = require('async');
 
 function scrapeTable(url, cb) {
-    scraper(START_URL, function(err, $) {
+    scraper(url, function(err, $) {
 	if (err) {
 	    return cb(err);
 	}
@@ -9,7 +11,7 @@ function scrapeTable(url, cb) {
 	function extract() {
 	    var item = {};
 	    var line = [];
-	    $(this).children("td").each(function() {
+	    $(this).children("th, td").each(function() {
 		if ($(this).attr('colspan') == "5") {
 		    var subtable = $(this).children('table');
 		    var category = subtable.children('thead').find('th.col-2').text();
@@ -24,9 +26,17 @@ function scrapeTable(url, cb) {
 		}
 
 		var s = $(this).text();
-		line.push(s);
+		if (s == "Details") {
+		    var href = $(this).find('a').attr('href');
+		    line.push(resolve(url, href));
+		} else
+		    line.push(s);
 	    });
-	    if (line.length > 0) {
+	    if (line.length == 3) {
+		item.label = line[0];
+		item['2013'] = toNum(line[1]);
+		item['2014'] = toNum(line[2]);
+	    } else if (line.length > 3) {
 		function toNum(s) {
 		    return s ?
 			parseInt(s.replace(/\./g, "").replace(/,/g, "."), 10) :
@@ -35,11 +45,12 @@ function scrapeTable(url, cb) {
 		item.label = line[1];
 		item['2013'] = toNum(line[2]);
 		item['2014'] = toNum(line[3]);
+		item.subLink = line[4];
 	    }
 	    return item.label ? item : null;
 	}
 
-	var items = $('table#budget').children('tbody').children('tr').map(extract).toArray();
+	var items = $('#budget, #budget-detail').children('tbody').children('tr').map(extract).toArray();
 	cb(null, items);
     });
 }
@@ -51,5 +62,35 @@ scrapeTable(START_URL, function(err, items) {
 	process.exit(1);
     }
 
-    console.log("loadData(" + JSON.stringify(items.slice(2))  + ");");
+    items = items.slice(2);
+    var subLinkItems = [];
+    function findSubLinks(items) {
+	items.forEach(function(item) {
+	    if (item.subLink)
+		subLinkItems.push(item);
+	    if (item.sub)
+		findSubLinks(item.sub);
+	});
+    }
+    findSubLinks(items);
+    async.forEachSeries(subLinkItems, function(subLinkItem, cb) {
+	var scrapeStart = new Date().getTime();
+	scrapeTable(subLinkItem.subLink, function(error, items) {
+	    console.error("subItems", subLinkItem.subLink, JSON.stringify(items));
+	    if (items) {
+		delete subLinkItem.subLink;
+		console.error("subLinkItem", subLinkItem.label, items.length);
+		subLinkItem.sub = items;
+	    }
+	    var scrapeEnd = new Date().getTime();
+	    setTimeout(function() {
+		cb(error);
+	    }, Math.max(1, scrapeStart + 10000 - scrapeEnd));
+	});
+    }, function(error) {
+	if (error)
+	    console.error(error.stack || error.message || error);
+
+	console.log("loadData(" + JSON.stringify(items)  + ");");
+    });
 });
