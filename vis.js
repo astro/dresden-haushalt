@@ -1,3 +1,5 @@
+window.loadData = (function() {
+
 var W = 640, H = 480;
 var PAD_TOP = 16;
 
@@ -233,6 +235,8 @@ function strColor(s) {
     return "rgb(" + [rgb].join(",") + ")";
 }
 
-function loadData(data) {
+return function loadData(data) {
     plot(data);
 }
+
+})();
