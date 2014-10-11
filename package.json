@@ -1,0 +1,26 @@
+{
+  "name": "dresden-haushalt",
+  "version": "0.0.0",
+  "description": "",
+  "main": "vis.js",
+  "dependencies": {
+    "async": "^0.1.22",
+    "csv": "^0.4.0",
+    "request": "^2.45.0",
+    "scraper": "^0.0.9",
+    "through2": "^0.6.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/astro/dresden-haushalt.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astro/dresden-haushalt/issues"
+  }
+}
