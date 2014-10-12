@@ -6,38 +6,61 @@ var PAD_TOP = 16;
 var history = [];
 
 function plot(data) {
+    var categories = [];
+    for(var k in data) {
+        var category = {
+            label: k,
+            sub: data[k]
+        };
+        function sumUp(data) {
+            for(var k in data) {
+                if (/^\d{4}$/.test(k)) {
+                    if (!category.hasOwnProperty(k)) {
+                        category[k] = 0;
+                    }
+                    category[k] += data[k];
+                } else {
+                    sumUp(data[k]);
+                }
+            }
+        }
+        sumUp(data[k]);
+        categories.push(category);
+    }
+
     function sig(x) {
 	return x < 0 ? -1 : 1;
     }
     /* Presort by size */
-    data = data.sort(function(a, b) {
-	if (sig(a['2013']) != sig(a['2014']) &&
-	    sig(b['2013']) == sig(b['2014']))
-	    return -1;
-	if (sig(a['2013']) == sig(a['2014']) &&
-	    sig(b['2013']) != sig(b['2014']))
-	    return 1;
+    categories = categories.sort(function(a, b) {
+        if (sig(a['2013']) != sig(a['2014']) &&
+            sig(b['2013']) == sig(b['2014']))
+            return -1;
+        if (sig(a['2013']) == sig(a['2014']) &&
+            sig(b['2013']) != sig(b['2014']))
+            return 1;
 
-	var diff1 = Math.abs(a['2013'] - a['2014']);
-	var diff2 = Math.abs(b['2013'] - b['2014']);
-	if (diff1 < diff2)
-	    return -1;
-	else if (diff1 > diff2)
-	    return 1;
-	else
-	    return 0;
+        var diff1 = Math.abs(a['2013'] - a['2014']);
+        var diff2 = Math.abs(b['2013'] - b['2014']);
+        if (diff1 < diff2)
+            return -1;
+        else if (diff1 > diff2)
+            return 1;
+        else
+            return 0;
     });
 
-    var dates = ['2013', '2014'];
-    var totalsSpent = [0, 0], totalsIncome = [0, 0];
-    data.forEach(function(d) {
+    var dates = ['2011', '2012', '2013', '2014', '2015', '2016'];
+    var totalsSpent = [0, 0, 0, 0, 0, 0], totalsIncome = [0, 0, 0, 0, 0, 0];
+    categories.forEach(function(d) {
 	for(var i = 0; i < dates.length; i++) {
 	    var date = dates[i];
-	    if (d[date] < 0) {
+	    if (typeof d[date] != 'number') {
+	    } else if (d[date] < 0) {
 		d[date + ':y2'] = totalsSpent[i];
 		totalsSpent[i] += Math.sqrt(-d[date]);
 		d[date + ':y1'] = totalsSpent[i];
-	    } else {
+	    } else if (d[date] > 0) {
 		d[date + ':y1'] = -totalsIncome[i];
 		totalsIncome[i] += Math.sqrt(d[date]);
 		d[date + ':y2'] = -totalsIncome[i];
@@ -80,7 +103,7 @@ function plot(data) {
 
     var hovertexts;
     svg.selectAll('.line')
-	.data(data).enter()
+	.data(categories).enter()
 	.append('path')
 	.attr('class', "line")
 	.attr('fill', function(d) {
