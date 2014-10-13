@@ -8,9 +8,13 @@
     <script src="vis.js" type="text/javascript" charset="UTF-8"> </script>
     <style>
       text { text-shadow: -1px -1px 1px white, 1px -1px 1px white, -1px 1px 1px white, 1px 1px 1px white };
-      svg { margin: 1em auto; }
-      nav ul { float: right; margin-top: 4em; }
-      nav ul li { cursor: pointer; }
+      svg { display: block; margin: 0 auto; }
+      nav ul { padding: 0; }
+      nav ul li::before {
+        content: '⏪';
+        color: #aaa;
+      }
+      nav ul li { cursor: pointer; display: inline-block; margin: 0 0.2em; list-style-type: none; }
     </style>
     <link rel="stylesheet" href="http://simonwhitaker.github.com/github-fork-ribbon-css/gh-fork-ribbon.css" />
   </head>
@@ -22,7 +26,7 @@
       </div>
     </div>
 
-    <h1>Ergebnishaushalt Dresden</h1>
+    <h1>Haushalt Dresden</h1>
 
     <nav><ul></ul></nav>
     <article>

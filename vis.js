@@ -2,8 +2,14 @@ window.loadData = (function() {
 
 var W = 640, H = 480;
 var PAD_TOP = 16;
+var PAD_BOTTOM = 16;
 
 function formatCurrency(n) {
+    var mio = false;
+    if (n >= 1000000 || n <= -1000000) {
+        n = Math.round(n / 1000000);
+        mio = true;
+    }
     var s = "" + n;
     var l = [];
     while(s.length > 3) {
@@ -11,18 +17,30 @@ function formatCurrency(n) {
         s = s.slice(0, s.length - 3);
     }
     l.unshift(s);
-    return l.join(".").replace(/^-\./, "-");
+
+    var r = l.join(".").replace(/^-\./, "-");
+    return r +
+        (mio ? " Mio." : "") +
+        " €";
 }
 
 var history = [];
 
 function plot(data) {
+    W = window.innerWidth ? window.innerWidth - 32 : W;
+    H = Math.max(480, window.innerHeight ? window.innerHeight - 32 : H);
+
     var categories = [];
     for(var k in data) {
         var category = {
-            label: k,
-            sub: data[k]
+            label: k
         };
+        if (Object.keys(data[k]).some(function(key) {
+            return !/^\d{4}$/.test(key);
+        })) {
+
+            category.sub = data[k];
+        }
         function sumUp(data) {
             for(var k in data) {
                 if (/^\d{4}$/.test(k)) {
@@ -67,11 +85,11 @@ function plot(data) {
         categories.forEach(function(d) {
             if (d[date] <= 0) {
 		d[date + ':y2'] = ySpent;
-		ySpent += /*Math.sqrt*/ (-d[date]);
+		ySpent += Math.sqrt(-d[date]);
 		d[date + ':y1'] = ySpent;
 	    } else if (d[date] > 0) {
 		d[date + ':y1'] = -yIncome;
-		yIncome += /*Math.sqrt*/ (d[date]);
+		yIncome += Math.sqrt(d[date]);
 		d[date + ':y2'] = -yIncome;
 	    }
 	});
@@ -86,7 +104,7 @@ function plot(data) {
 	return x * W / (2 * dates.length - 1);
     }
     function mapY(y) {
-	return (y - minY) * (H - PAD_TOP) / (maxY - minY) + PAD_TOP;
+	return (y - minY) * (H - PAD_TOP - PAD_BOTTOM) / (maxY - minY) + PAD_TOP;
     }
 
     var container = d3.select('article');
@@ -181,15 +199,13 @@ function plot(data) {
 			    return Math.floor(mapX((i - 1) * 2 + 0.5));
 		    })
 		    .attr('y', function(date, i) {
-			var y2Min = Math.min.apply(Math, dates.map(function(date) {
-				return d[date + ':y2'];
+			var y1Max = Math.max.apply(Math, dates.map(function(date) {
+				return d[date + ':y1'];
 			}));
 			if (i == 0)
-			    return Math.floor(mapY(y2Min) - 7);
+			    return Math.floor(mapY(y1Max) + 5);
 			else
-			    return Math.floor(Math.max(
-						  mapY(d[date + ':y1']) - 7,
-						  mapY(y2Min) + 7));
+			    return Math.floor(mapY(d[date + ':y1']) - 8);
 		    })
 		    .attr('fill', "black")
 		    .attr('font-weight', function(date, i) {
@@ -201,11 +217,11 @@ function plot(data) {
 			if (i == 0)
 			    return d.label;
 			else
-			    return formatCurrency(d[date]) + " €";
+			    return formatCurrency(d[date]);
 		    });
 		d.hovering = true;
 	    }
-	}).on('mouseout', function(d) {
+	}, true).on('mouseout', function(d) {
 	    if (d.hovering) {
 		hovertexts.remove();
 		d3.select(this)
@@ -213,7 +229,7 @@ function plot(data) {
 		    .attr('z-index', 0);
 		delete d.hovering;
 	    }
-	}).attr('style', function(d) {
+	}, true).attr('style', function(d) {
 	    if (d.sub)
 		return "cursor: pointer";
 	    else
@@ -241,7 +257,7 @@ function plot(data) {
     historyList.enter()
 	.append('li')
 	.text(function(h) {
-	    return "Verlasse " + h.label;
+	    return h.label;
 	})
 	.on('click', function(h) {
 	    var h1;
