@@ -2,12 +2,12 @@ var csv = require('csv');
 var request = require('request');
 var through = require('through2');
 
-function fetch(url, iter, cb) {
+function fetchStream(url) {
     var headers;
 
-    request(url)
+    return request(url)
         .pipe(csv.parse())
-        .pipe(through.obj(function(cells, enc, cb) {
+        .pipe(through.obj(function objectify(cells, enc, cb) {
             if (!headers) {
                 headers = cells;
             } else {
@@ -19,11 +19,7 @@ function fetch(url, iter, cb) {
             }
 
             cb();
-        }))
-        .pipe(through.obj(function(obj, enc, cb) {
-            iter(obj);
-            cb();
-        }, cb));
+        }));
 }
 
 var urls = [
@@ -33,27 +29,27 @@ var urls = [
 ];
 var tree = {};
 function go() {
-    fetch(urls.shift(),
-          function(obj) {
-              var subtree = tree;
-              ['part', 'group', 'subgroup', 'row'].forEach(function(k) {
-                  var key = obj[k + '-name'] || obj[k + '-id'] || obj[k + '-index'] || "";
-                  if (!key) {
-                      return;  // next k
-                  }
-                  if (!subtree.hasOwnProperty(key)) {
-                      subtree[key] = {};
-                  }
-                  subtree = subtree[key];
-              });
-              subtree[obj.time] = parseInt(obj.amount, 10);
-          }, function() {
-              if (urls.length > 0) {
-                  // next url
-                  return go();
-              }
+    if (urls.length < 1) {
+        console.log(JSON.stringify(tree, 2));
+        return;
+    }
 
-              console.log(JSON.stringify(tree, 2));
-          });
+    fetchStream(urls.shift())
+        .pipe(through.obj(function(obj, enc, cb) {
+            var subtree = tree;
+            ['part', 'group', 'subgroup', 'row'].forEach(function(k) {
+                var key = obj[k + '-name'] || obj[k + '-id'] || obj[k + '-index'] || "";
+                if (!key) {
+                    return;  // next k
+                }
+                if (!subtree.hasOwnProperty(key)) {
+                    subtree[key] = {};
+                }
+                subtree = subtree[key];
+            });
+            subtree[obj.time] = parseInt(obj.amount, 10);
+
+            cb();
+          }, go));
 }
 go();

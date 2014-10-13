@@ -3,6 +3,17 @@ window.loadData = (function() {
 var W = 640, H = 480;
 var PAD_TOP = 16;
 
+function formatCurrency(n) {
+    var s = "" + n;
+    var l = [];
+    while(s.length > 3) {
+        l.unshift(s.slice(s.length - 3));
+        s = s.slice(0, s.length - 3);
+    }
+    l.unshift(s);
+    return l.join(".").replace(/^-\./, "-");
+}
+
 var history = [];
 
 function plot(data) {
@@ -31,49 +42,46 @@ function plot(data) {
     function sig(x) {
 	return x < 0 ? -1 : 1;
     }
-    /* Presort by size */
-    categories = categories.sort(function(a, b) {
-        if (sig(a['2013']) != sig(a['2014']) &&
-            sig(b['2013']) == sig(b['2014']))
-            return -1;
-        if (sig(a['2013']) == sig(a['2014']) &&
-            sig(b['2013']) != sig(b['2014']))
-            return 1;
-
-        var diff1 = Math.abs(a['2013'] - a['2014']);
-        var diff2 = Math.abs(b['2013'] - b['2014']);
-        if (diff1 < diff2)
-            return -1;
-        else if (diff1 > diff2)
-            return 1;
-        else
-            return 0;
-    });
 
     var dates = ['2011', '2012', '2013', '2014', '2015', '2016'];
-    var totalsSpent = [0, 0, 0, 0, 0, 0], totalsIncome = [0, 0, 0, 0, 0, 0];
-    categories.forEach(function(d) {
-	for(var i = 0; i < dates.length; i++) {
-	    var date = dates[i];
-	    if (typeof d[date] != 'number') {
-	    } else if (d[date] < 0) {
-		d[date + ':y2'] = totalsSpent[i];
-		totalsSpent[i] += Math.sqrt(-d[date]);
-		d[date + ':y1'] = totalsSpent[i];
-	    } else if (d[date] > 0) {
-		d[date + ':y1'] = -totalsIncome[i];
-		totalsIncome[i] += Math.sqrt(d[date]);
-		d[date + ':y2'] = -totalsIncome[i];
-	    }
-	}
-    });
     var minY = 0, maxY = 0;
-    for(var i = 0; i < dates.length; i++) {
-	if (-totalsIncome[i] < minY)
-	    minY = -totalsIncome[i];
-	if (totalsSpent[i] > maxY)
-	    maxY = totalsSpent[i];
-    }
+    dates.forEach(function(date) {
+        categories.forEach(function(d) {
+	    if (typeof d[date] != 'number') {
+                d[date] = 0;
+	    }
+        });
+        categories = categories.sort(function(d1, d2) {
+            if (d1[date] == 0 && d2[date] != 0) {
+                return -1;
+            } else if (d1[date] != 0 && d2[date] == 0) {
+                return 1;
+            } else if (d1[date] < 0 && d2[date] < 0) {
+                return d2[date] - d1[date];
+            } else {
+                return d1[date] - d2[date];
+            }
+        });
+        var yIncome = 0;
+        var ySpent = 0;
+        categories.forEach(function(d) {
+            if (d[date] <= 0) {
+		d[date + ':y2'] = ySpent;
+		ySpent += /*Math.sqrt*/ (-d[date]);
+		d[date + ':y1'] = ySpent;
+	    } else if (d[date] > 0) {
+		d[date + ':y1'] = -yIncome;
+		yIncome += /*Math.sqrt*/ (d[date]);
+		d[date + ':y2'] = -yIncome;
+	    }
+	});
+        if (-yIncome < minY) {
+            minY = -yIncome;
+        }
+        if (ySpent > maxY) {
+            maxY = ySpent;
+        }
+    });
     function mapX(x) {
 	return x * W / (2 * dates.length - 1);
     }
@@ -193,7 +201,7 @@ function plot(data) {
 			if (i == 0)
 			    return d.label;
 			else
-			    return d[date] + " €";
+			    return formatCurrency(d[date]) + " €";
 		    });
 		d.hovering = true;
 	    }
